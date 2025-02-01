@@ -1,3 +1,6 @@
+// Load environment variables
+require('dotenv').config(); 
+
 //Express 
 const express = require ('express');
 
@@ -21,20 +24,20 @@ const io = new Server(server);
 //Express to access Html 
 app.use(express.static('public'));
 
-// //Connecting server to Database (MYSQL)
-// const db = mysql.createConnection({
-//     host: process.env.DB_HOST,
-//     user: process.env.DB_USER,
-//     password: process.env.DB_PASSWORD,
-//     database: process.env.DB_DATABASE
-// });
+//Connecting server to Database (MYSQL)
+const db = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE
+});
 
-// module.exports = db;
+module.exports = db;
 
-// db.connect(error => {
-//     if (error) throw error;
-//     console.log("Connected to MYSQL Succefully")
-// })
+db.connect(err => {
+    if (err) throw err;
+    console.log("Connected to MYSQL Succefully")
+})
 
 //Connect Socket 
 io.on("connection", socket => {
