@@ -1,22 +1,26 @@
 /*
-    RGB LED: THIS IS A VISUAL CUE ON THE WINNER
+    RGB LED: THIS IS A VISUAL CUE
 */
 #define BLUE 11
 #define GREEN 12
 #define RED 13
 
 /*  
-    LED: THIS IS TO SET THE GAME STATUS
+    LED: THIS IS FOR GAME COUNTDOWN
 */
 #define WAIT 22
 #define READY 24
-#define SINGLE_PLAYER 26
-#define MULTI_PLAYER 28
+#define SET 26
+#define START 28
 
 /*
     BUTTONS: THESE ARE USED TO GAGE REACTION TIME
 */
 
+/*
+  BUZZER
+*/
+#define BUZZER 10
 
 // GLOBAL VARIALES, RECEIVED FROM SERIAL CONNECTION
 int g_GameMode = 3;
@@ -38,15 +42,18 @@ void setup()
   // LED setup
   pinMode(WAIT, OUTPUT);
   pinMode(READY, OUTPUT);
-  pinMode(SINGLE_PLAYER, OUTPUT);
-  pinMode(MULTI_PLAYER, OUTPUT);
+  pinMode(SET, OUTPUT);
+  pinMode(START, OUTPUT);
 
   digitalWrite(WAIT, LOW);
   digitalWrite(READY, LOW);
-  digitalWrite(SINGLE_PLAYER, LOW);
-  digitalWrite(MULTI_PLAYER, LOW);
+  digitalWrite(SET, LOW);
+  digitalWrite(START, LOW);
 
   // Buttons setup
+
+  // Buzzer setup
+  pinMode(BUZZER, OUTPUT);
 }
 
 
@@ -62,68 +69,106 @@ void clearRgb()
   setColourRgb(0, 0, 0);
 }
 
-void setGameStatusReady(bool bIsReady)
-{
-  if (bIsReady)
-  {
-    digitalWrite(READY, HIGH);
-    digitalWrite(WAIT, LOW);
-    Serial.print("ready\n");
-  }
-  else
-  {
-    digitalWrite(READY, LOW);
-    digitalWrite(WAIT, HIGH);
-    Serial.print("wait\n");
-  }
-}
-
 void setPlayerMode(int iMode)
 {
   if (iMode == 1)
   {
-    digitalWrite(SINGLE_PLAYER, HIGH);
-    digitalWrite(MULTI_PLAYER, LOW);
-
+    g_GameMode = iMode;
     Serial.print("SinglePlayer\n");
+    g_isReady = true;
+    setGameStatusReady(g_isReady);
   }
-  if (iMode == 2)
+  else if (iMode == 2)
   {
-    digitalWrite(SINGLE_PLAYER, LOW);
-    digitalWrite(MULTI_PLAYER, HIGH);
-
+    g_GameMode = iMode;
     Serial.print("MultiPlayer\n");
+    g_isReady = true;
+    setGameStatusReady(g_isReady);
   }
-  if (iMode == 3)
+  else if (iMode == 3)
   {
-    digitalWrite(SINGLE_PLAYER, LOW);
-    digitalWrite(MULTI_PLAYER, LOW);
-    setGameStatusReady(false);
-
+    g_GameMode = iMode;
     Serial.print("Waiting\n");
+    g_isReady = false;
+    setGameStatusReady(g_isReady);
+  }
+  else
+  {
+    Serial.print("InvalidGameMode\n");
+  }
+}
+
+void countdown()
+{
+  delay(4000);
+
+  clearRgb();
+
+  digitalWrite(WAIT, HIGH);
+
+  delay(2000);
+
+  digitalWrite(READY, HIGH);
+
+  delay(2000);
+ 
+  digitalWrite(SET, HIGH);
+
+  delay(2000);
+
+
+  digitalWrite(WAIT, LOW);
+  digitalWrite(READY, LOW);
+  digitalWrite(SET, LOW);
+
+  tone(BUZZER, 2500, 10000);
+
+  digitalWrite(START, HIGH);
+  delay(1000);
+  noTone(BUZZER);
+
+  Serial.print("START\n");
+  
+  delay(2000);
+}
+
+void setGameStatusReady(bool bIsReady)
+{
+  if (bIsReady)
+  {
+    digitalWrite(WAIT, LOW);
+    digitalWrite(READY, LOW);
+    digitalWrite(SET, LOW);
+    digitalWrite(START, LOW);
+
+    clearRgb();
+    setColourRgb(255, 0, 255);
+
+    countdown();
+  }
+  else
+  {
+    digitalWrite(WAIT, HIGH);
+    digitalWrite(READY, HIGH);
+    digitalWrite(SET, HIGH);
+    digitalWrite(START, LOW);
+
+    setColourRgb(255, 0, 0);
   }
 }
 
 // main loop
 void loop()
 {
-  delay(5000);
+  delay(2000);
   setColourRgb(0, 255, 0);
-  setPlayerMode(g_GameMode);
+  setPlayerMode(3);
 
-  delay(5000);
-  setGameStatusReady(g_isReady);
+  setPlayerMode(1);
 
-  delay(5000);
-  g_GameMode = 1;
-  setPlayerMode(g_GameMode);
+  delay(1000);
 
-  delay(5000);
-  g_GameMode = 2;
-  setPlayerMode(g_GameMode);
+  setPlayerMode(2);
 
-  delay(5000);
-  g_isReady = true;
-  setGameStatusReady(g_isReady);
+  delay(1000);
 }
-
