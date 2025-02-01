@@ -11,8 +11,42 @@
     </style>
 </head>
 <body>
-    <h1>Test</h1>
+    <h1>Reaction Timer Leaderboard</h1>
+    <button onclick="getScoreBoard()">Get Leaderboard</button>
+    <table>
+        <thead>
+            <tr>
+                <th>Player</th>
+                <th>Reaction Time (s)</th>
+            </tr>
+        </thead>
+        <tbody id="leaderboard"></tbody>
+    </table>
+
+    <script>
+        const socket = io();
+
+        function getScoreBoard() {
+            socket.emit("getScoreBoard");
+        }
+
+        socket.on("ScoreData", (players) => {
+            const leaderboard = document.getElementById("leaderboard");
+            leaderboard.innerHTML = "";
+            players.forEach(player => {
+                const row = `<tr>
+                                <td>${player.name}</td>
+                                <td>${player.reaction_time}</td>
+                             </tr>`;
+                leaderboard.innerHTML += row;
+            });
+        });
+
+        // Listen for Scoreboard updates
+        socket.on("updatedScoreBoard", () => {
+            getScoreBoard();
+        });
+
+    </script>
 </body>
-<script>
-    const socket = io();
-</script>
+</html>

@@ -1,6 +1,6 @@
 # reaction-game
 
-#Dependencies
+# Dependencies
 Install dependencies by typing npm install dependency name
 - For example for express : npm install express 
 - express
@@ -8,3 +8,4 @@ Install dependencies by typing npm install dependency name
 - serialport 
 - mysql2
 - dotenv
+- cors
