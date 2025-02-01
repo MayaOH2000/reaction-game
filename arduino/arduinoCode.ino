@@ -25,9 +25,18 @@
 #define BUZZER 10
 
 // GLOBAL VARIALES, RECEIVED FROM SERIAL CONNECTION
-int g_GameMode = 3;
-bool g_isReady = false;
-unsigned long startTime;
+
+int g_GameMode = 3; // no modes have been selected
+bool g_isReady = false; // when true, game is in play
+
+unsigned long g_startTime;
+unsigned long g_reactionPlayer1;
+unsigned long g_reactionPlayer2;
+
+bool g_isPlayer1Done = false;
+bool g_isPlayer2Done = false;
+
+bool g_AskGameMode = false;
 
 void setup()
 {
@@ -47,10 +56,12 @@ void setup()
   pinMode(SET, OUTPUT);
   pinMode(START, OUTPUT);
 
-  digitalWrite(WAIT, LOW);
-  digitalWrite(READY, LOW);
-  digitalWrite(SET, LOW);
+  digitalWrite(WAIT, HIGH);
+  digitalWrite(READY, HIGH);
+  digitalWrite(SET, HIGH);
   digitalWrite(START, LOW);
+
+  setColourRgb(0, 255, 255);
 
   // Buttons setup
   pinMode(PLAYER_1, INPUT_PULLUP);
@@ -62,7 +73,7 @@ void setup()
   pinMode(BUZZER, OUTPUT);
 }
 
-
+// Set RGB colour
 void setColourRgb(int iRed, int iGreen, int iBlue)
 {
   analogWrite(RED, iRed);
@@ -75,17 +86,32 @@ void clearRgb()
   setColourRgb(0, 0, 0);
 }
 
+// Start game with selected player mode
 void setPlayerMode(int iMode)
 {
   if (iMode == 1)
   {
     g_GameMode = iMode;
+
+    g_reactionPlayer1 = 0;
+    g_reactionPlayer2 = 0;
+
+    g_isPlayer1Done = false;
+    g_isPlayer2Done = false;
+
     Serial.print("SinglePlayer\n");
     setGameStatusReady(true);
   }
   else if (iMode == 2)
   {
     g_GameMode = iMode;
+
+    g_reactionPlayer1 = 0;
+    g_reactionPlayer2 = 0;
+
+    g_isPlayer1Done = false;
+    g_isPlayer2Done = false;
+
     Serial.print("MultiPlayer\n");
     setGameStatusReady(true);
   }
@@ -101,6 +127,7 @@ void setPlayerMode(int iMode)
   }
 }
 
+// Start countdown for the game
 void countdown()
 {
   delay(2000);
@@ -125,8 +152,11 @@ void countdown()
   tone(BUZZER, 2500, 1000);
   delay(300);
   noTone(BUZZER);
+
+  g_startTime = millis(); // start game and resets time
 }
 
+// Sets status of the game
 void setGameStatusReady(bool bIsReady)
 {
   if (bIsReady)
@@ -149,46 +179,117 @@ void setGameStatusReady(bool bIsReady)
     digitalWrite(SET, HIGH);
     digitalWrite(START, LOW);
 
-    setColourRgb(255, 0, 0);
+    setColourRgb(0, 255, 255);
   }
 }
 
+// Evaluate reaction time and end game
 void reaction(int iPlayer)
 {
-  unsigned long reactionTime;
+  if (g_GameMode == 1)
+  {
+    g_reactionPlayer1 = millis() - g_startTime;
 
-  reactionTime = millis() - startTime;
-  setColourRgb(0, 0, 128);
+    setColourRgb(0, 0, 128);
 
-  Serial.print((iPlayer == PLAYER_1) ? "Player 1 wins with: " : "Player 2 wins with: ");
-  Serial.print(reactionTime);
-  Serial.println(" ms\n");
+    delay(2000);
 
-  delay(2000);
+    Serial.print("Player 1: ");
+    Serial.print(g_reactionPlayer1);
+    Serial.println(" ms\n");
 
-  digitalWrite(START, LOW);
-  clearRgb();
+    // Reset game
+    digitalWrite(START, LOW);
+    clearRgb();
 
-  setGameStatusReady(false);
+    setGameStatusReady(false);
+    g_AskGameMode = false;
+  }
+
+  // Get times if players have not pressed their buttons
+  // Save first press for each player
+  if (g_GameMode == 2 && (!g_isPlayer1Done || !g_isPlayer2Done))
+  {
+    if (!g_isPlayer1Done && iPlayer == PLAYER_1)
+    {
+      g_reactionPlayer1 = millis() - g_startTime;
+      g_isPlayer1Done = true;
+    }
+    else if (!g_isPlayer2Done && iPlayer == PLAYER_2)
+    {
+      g_reactionPlayer2 = millis() - g_startTime;
+      g_isPlayer2Done = true;
+    }
+  }
+
+  // End game when both players pressed their buttons
+  if (g_GameMode == 2 && g_isPlayer1Done && g_isPlayer2Done)
+  {
+    setColourRgb(0, 0, 128);
+
+    delay(2000);
+
+    Serial.print("Player 1: ");
+    Serial.print(g_reactionPlayer1);
+    Serial.println(" ms");
+    Serial.print("Player 2: ");
+    Serial.print(g_reactionPlayer2);
+    Serial.println(" ms\n");
+
+    // Reset game
+    digitalWrite(START, LOW);
+    clearRgb();
+
+    Serial.print(g_reactionPlayer1 < g_reactionPlayer2 ? "Player 1 wins!\n" : "Player 2 wins!\n");
+
+    setGameStatusReady(false);
+    g_AskGameMode = false;
+  }
 }
 
 // main loop
-// currently keeps game on multiplayer mode player
 void loop()
 {
   // Keep game mode on single player
-  if (g_GameMode == 3)
+  if (!g_isReady)
   {
-    setGameStatusReady(false);
-    setPlayerMode(2);
-    startTime = millis(); // resets time
-  }
+    if (!g_AskGameMode)
+    {
+      setGameStatusReady(false);
+      Serial.print("Press button 1 to play single mode and button 2 to play multiplayer mode\n");
+      g_AskGameMode = true;
+    }    
 
-  // button is pressed by player
+    if (digitalRead(PLAYER_1) == LOW)
+    {
+      setPlayerMode(1);
+    }
+
+    else if (digitalRead(PLAYER_2) == LOW)
+    {
+      setPlayerMode(2);
+    }
+
+    else if (Serial.available() > 0){
+      String command = Serial.readStringUntil('\n');
+      command.trim(); 
+      command.toUpperCase();
+      if (command == "SINGLE") {
+        setPlayerMode(1);
+      } 
+      else if (command == "MULTI") {
+        setPlayerMode(2);
+      } 
+      else 
+      {
+        Serial.println("Unknown game mode! Please enter a valid mode!");
+      }
+    }
+
+  }
 
   if (g_GameMode == 1 && digitalRead(PLAYER_1) == LOW && g_isReady == true)
   {
-      Serial.print("PLAYER 1 BUTTON\n");
       reaction(PLAYER_1);
   }
 
@@ -196,13 +297,11 @@ void loop()
   {
     if (digitalRead(PLAYER_1) == LOW && g_isReady == true)
     {
-      Serial.print("PLAYER 1 BUTTON\n");
       reaction(PLAYER_1);
     }
 
     else if (digitalRead(PLAYER_2) == LOW && g_isReady == true)
     {
-      Serial.print("PLAYER 2 BUTTON\n");
       reaction(PLAYER_2);
     }    
   }
