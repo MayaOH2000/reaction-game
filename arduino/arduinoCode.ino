@@ -16,6 +16,8 @@
 /*
     BUTTONS: THESE ARE USED TO GAGE REACTION TIME
 */
+#define PLAYER_1 7
+#define PLAYER_2 6
 
 /*
   BUZZER
@@ -25,7 +27,7 @@
 // GLOBAL VARIALES, RECEIVED FROM SERIAL CONNECTION
 int g_GameMode = 3;
 bool g_isReady = false;
-
+unsigned long startTime;
 
 void setup()
 {
@@ -51,6 +53,10 @@ void setup()
   digitalWrite(START, LOW);
 
   // Buttons setup
+  pinMode(PLAYER_1, INPUT_PULLUP);
+  pinMode(PLAYER_2, INPUT_PULLUP);
+  digitalWrite(PLAYER_1, HIGH);
+  digitalWrite(PLAYER_2, HIGH);
 
   // Buzzer setup
   pinMode(BUZZER, OUTPUT);
@@ -100,36 +106,28 @@ void setPlayerMode(int iMode)
 
 void countdown()
 {
-  delay(4000);
-
+  delay(2000);
   clearRgb();
 
+  // start countdown
   digitalWrite(WAIT, HIGH);
-
   delay(2000);
-
   digitalWrite(READY, HIGH);
-
   delay(2000);
- 
   digitalWrite(SET, HIGH);
-
   delay(2000);
 
-
+  // Standby
   digitalWrite(WAIT, LOW);
   digitalWrite(READY, LOW);
   digitalWrite(SET, LOW);
-
-  tone(BUZZER, 2500, 10000);
-
   digitalWrite(START, HIGH);
-  delay(1000);
-  noTone(BUZZER);
+  delay(random(2000, 5000));  
 
-  Serial.print("START\n");
-  
-  delay(2000);
+  // Start game
+  tone(BUZZER, 2500, 1000);
+  delay(300);
+  noTone(BUZZER);
 }
 
 void setGameStatusReady(bool bIsReady)
@@ -143,7 +141,6 @@ void setGameStatusReady(bool bIsReady)
 
     clearRgb();
     setColourRgb(255, 0, 255);
-
     countdown();
   }
   else
@@ -157,18 +154,43 @@ void setGameStatusReady(bool bIsReady)
   }
 }
 
+void reaction()
+{
+  
+
+  unsigned long reactionTime;
+
+  reactionTime = millis() - startTime;
+  setColourRgb(0, 0, 128);
+
+  Serial.print(reactionTime);
+  Serial.println(" ms\n");
+
+  delay(2000);
+
+  digitalWrite(START, LOW);
+  clearRgb();
+
+  setGameStatusReady(false);
+}
+
 // main loop
+// currently keeps game on single mode player
 void loop()
 {
-  delay(2000);
-  setColourRgb(0, 255, 0);
-  setPlayerMode(3);
+  // Keep game mode on single player
+  if (g_GameMode == 3)
+  {
+    setGameStatusReady(false);
+    setPlayerMode(1);
+    startTime = millis(); // resets time
+  }
 
-  setPlayerMode(1);
+  // button is pressed by player
+  if (digitalRead(PLAYER_1) == LOW && g_isReady == true)
+  {
+    Serial.print("PLAYER 1 BUTTON\n");
+    reaction();
+  }
 
-  delay(1000);
-
-  setPlayerMode(2);
-
-  delay(1000);
 }
