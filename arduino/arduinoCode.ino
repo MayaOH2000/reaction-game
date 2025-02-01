@@ -81,22 +81,19 @@ void setPlayerMode(int iMode)
   {
     g_GameMode = iMode;
     Serial.print("SinglePlayer\n");
-    g_isReady = true;
-    setGameStatusReady(g_isReady);
+    setGameStatusReady(true);
   }
   else if (iMode == 2)
   {
     g_GameMode = iMode;
     Serial.print("MultiPlayer\n");
-    g_isReady = true;
-    setGameStatusReady(g_isReady);
+    setGameStatusReady(true);
   }
   else if (iMode == 3)
   {
     g_GameMode = iMode;
     Serial.print("Waiting\n");
-    g_isReady = false;
-    setGameStatusReady(g_isReady);
+    setGameStatusReady(false);
   }
   else
   {
@@ -134,6 +131,7 @@ void setGameStatusReady(bool bIsReady)
 {
   if (bIsReady)
   {
+    g_isReady = true;
     digitalWrite(WAIT, LOW);
     digitalWrite(READY, LOW);
     digitalWrite(SET, LOW);
@@ -145,6 +143,7 @@ void setGameStatusReady(bool bIsReady)
   }
   else
   {
+    g_isReady = false;
     digitalWrite(WAIT, HIGH);
     digitalWrite(READY, HIGH);
     digitalWrite(SET, HIGH);
@@ -154,15 +153,14 @@ void setGameStatusReady(bool bIsReady)
   }
 }
 
-void reaction()
+void reaction(int iPlayer)
 {
-  
-
   unsigned long reactionTime;
 
   reactionTime = millis() - startTime;
   setColourRgb(0, 0, 128);
 
+  Serial.print((iPlayer == PLAYER_1) ? "Player 1 wins with: " : "Player 2 wins with: ");
   Serial.print(reactionTime);
   Serial.println(" ms\n");
 
@@ -175,22 +173,37 @@ void reaction()
 }
 
 // main loop
-// currently keeps game on single mode player
+// currently keeps game on multiplayer mode player
 void loop()
 {
   // Keep game mode on single player
   if (g_GameMode == 3)
   {
     setGameStatusReady(false);
-    setPlayerMode(1);
+    setPlayerMode(2);
     startTime = millis(); // resets time
   }
 
   // button is pressed by player
-  if (digitalRead(PLAYER_1) == LOW && g_isReady == true)
+
+  if (g_GameMode == 1 && digitalRead(PLAYER_1) == LOW && g_isReady == true)
   {
-    Serial.print("PLAYER 1 BUTTON\n");
-    reaction();
+      Serial.print("PLAYER 1 BUTTON\n");
+      reaction(PLAYER_1);
   }
 
+  if (g_GameMode == 2)
+  {
+    if (digitalRead(PLAYER_1) == LOW && g_isReady == true)
+    {
+      Serial.print("PLAYER 1 BUTTON\n");
+      reaction(PLAYER_1);
+    }
+
+    else if (digitalRead(PLAYER_2) == LOW && g_isReady == true)
+    {
+      Serial.print("PLAYER 2 BUTTON\n");
+      reaction(PLAYER_2);
+    }    
+  }
 }
