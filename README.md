@@ -7,3 +7,4 @@ Install dependencies by typing npm install dependency name
 - socket.io 
 - serialport 
 - mysql2
+- dotenv
