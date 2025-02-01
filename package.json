@@ -1,0 +1,26 @@
+{
+  "name": "reaction-game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MayaOH2000/reaction-game.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MayaOH2000/reaction-game/issues"
+  },
+  "homepage": "https://github.com/MayaOH2000/reaction-game#readme",
+  "dependencies": {
+    "express": "^4.21.2",
+    "mysql2": "^3.12.0",
+    "serialport": "^13.0.0",
+    "socket.io": "^4.8.1"
+  }
+}
