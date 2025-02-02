@@ -17,19 +17,33 @@
         <thead>
             <tr>
                 <th>Player</th>
-                <th>Reaction Time (s)</th>
+                <th>Reaction Time (ms)</th>
             </tr>
         </thead>
         <tbody id="leaderboard"></tbody>
     </table>
+    
+    <div>
+        <h2>Select Game Mode</h2>
+        <button id="single-btn">Single Player</button>
+        <button id="multi-btn">Multiplayer</button>
+
+        <p>Game Mode: <span id="game-mode">Waiting...</span></p>
+
+        <h2>Reaction Time</h2>
+        <p>Time: <span id="reaction">0</span> ms</p>
+    </div>
 
     <script>
         const socket = io();
+        let playerName = "TestPlayer1";  // You can replace this with the player's actual name
 
+        // Request the leaderboard
         function getScoreBoard() {
             socket.emit("getScoreBoard");
         }
 
+        // Handle the reception of score data and update the leaderboard
         socket.on("ScoreData", (players) => {
             const leaderboard = document.getElementById("leaderboard");
             leaderboard.innerHTML = "";
@@ -42,9 +56,32 @@
             });
         });
 
-        // Listen for Scoreboard updates
+        // Listen for Scoreboard updates and refresh the data
         socket.on("updatedScoreBoard", () => {
             getScoreBoard();
+        });
+
+        // Display the received reaction time on the frontend
+        socket.on("reaction", (data) => {
+            console.log(`Received reaction data from server: ${data.name}, Time: ${data.reaction}`);
+
+            document.getElementById("reaction").innerText = data.reaction + " ms";  // Display the reaction time in ms
+            socket.emit("score", { name: data.name, time: data.reaction });  // Insert the reaction time into the database
+        });
+
+        // Handle Single Player mode selection
+        document.getElementById("single-btn").addEventListener("click", () => {
+            socket.emit("selectGameMode", "SINGLE");
+        });
+
+        // Handle Multiplayer mode selection
+        document.getElementById("multi-btn").addEventListener("click", () => {
+            socket.emit("selectGameMode", "MULTI");
+        });
+
+        // Listen for the game mode change and update the UI
+        socket.on("gameMode", (mode) => {
+            document.getElementById("game-mode").innerText = mode;  // Display the selected game mode
         });
 
     </script>
