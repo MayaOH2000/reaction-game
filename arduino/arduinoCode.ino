@@ -149,11 +149,12 @@ void countdown()
   delay(random(2000, 5000));  
 
   // Start game
+  g_startTime = millis(); // start game and resets time
   tone(BUZZER, 2500, 1000);
   delay(300);
   noTone(BUZZER);
 
-  g_startTime = millis(); // start game and resets time
+  
 }
 
 // Sets status of the game
