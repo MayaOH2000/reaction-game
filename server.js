@@ -120,6 +120,7 @@ let player1ReactionTime = null;
 let aiReactionTime = null;
 let player1Recorded = false;
 let player2Recorded = false;
+let player2 = "AI";
 
 //Listen for Arduino data
 parser.on("data", (data) => {
@@ -155,12 +156,13 @@ parser.on("data", (data) => {
     
          } else if (playerName === "AI") {
                 aiReactionTime = time;
+                player2 = "AI";
             }
     
             // Determine winner after both times are received
             if (player1ReactionTime !== null && aiReactionTime !== null) {
                 // Emit the reaction time to the frontend
-                io.emit("reactions", { player1: player1ReactionTime, ai: aiReactionTime });
+                io.emit("reactions", { player1: player1ReactionTime, ai: aiReactionTime, playerU: player2 });
     
                 //Determine Winner
                 const winner = player1ReactionTime < aiReactionTime ? "Player 1" : "AI";
@@ -218,13 +220,14 @@ parser.on("data", (data) => {
             });
                 
                 player2Recorded = true;
+                player2 = "Player 2";
             }
         }
     
             // Determine winner after both times are received
             if (player1ReactionTime !== null && aiReactionTime !== null) {
                 // Emit the reaction time to the frontend
-                io.emit("reactions", { player1: player1ReactionTime, ai: aiReactionTime });
+                io.emit("reactions", { player1: player1ReactionTime, ai: aiReactionTime, playerU: player2 });
     
                 //Determine Winner
                 const winner = player1ReactionTime < aiReactionTime ? "Player 1" : "Player 2";

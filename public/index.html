@@ -97,7 +97,7 @@
     <div class="leaderboard-container">
         <h2>Reaction Time</h2>
         <p><strong>Player 1 Time:</strong> <span id="player1-time">0</span></p>
-        <p><strong>AI Time:</strong> <span id="ai-time">0 ms</span></p>
+        <p><strong id="player2-label">AI Time:</strong> <span id="ai-time">0 ms</span></p>
     </div>
 
     <div class="winner-container">
@@ -130,6 +130,16 @@
             socket.emit("getScoreBoard");
         }
 
+        function updatePlayer2Label(playerU) {
+        const player2Label = document.getElementById('player2-label');
+        
+        if (playerU && playerU !== 'AI') {
+            player2Label.textContent = `${playerU} Time:`;
+        } else {
+            player2Label.textContent = "AI Time:";
+        }
+    }
+
         // Handle the reception of score data and update the leaderboard
         socket.on("ScoreData", (players) => {
             const leaderboard = document.getElementById("leaderboard");
@@ -152,6 +162,8 @@
         socket.on("reactions", (data) => {
             document.getElementById("player1-time").innerText = `${data.player1} ms`;
             document.getElementById("ai-time").innerText = `${data.ai} ms`;
+
+            updatePlayer2Label(data.playerU);
         });
 
         // Handle Single Player mode selection
