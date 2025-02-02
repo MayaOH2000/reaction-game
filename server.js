@@ -175,7 +175,7 @@ parser.on("data", (data) => {
         }
 
     }
-    if (gameMode === "MULTI")
+    else if (gameMode === "MULTI")
     {
         const parts = trimmedData.split(":");
         if (parts.length === 2) {
