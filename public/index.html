@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reaction Game Leaderboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-image: url('pic.webp');
+            background-size: cover;
+            background-position: center;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            color: #00ffcc;
+            text-shadow: 2px 2px 10px rgba(0, 255, 204, 0.8);
+            margin-top: 20px;
+        }
+
+        button {
+            background: #00ffcc;
+            color: #121212;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin: 10px;
+        }
+
+        button:hover {
+            background: #009f99;
+            transform: scale(1.05);
+        }
+
+        .leaderboard-container {
+            width: 80%;
+            max-width: 600px;
+            margin: 30px auto;
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid #00ffcc;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 255, 204, 0.5);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 2px solid #00ffcc;
+            padding: 15px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        th {
+            background-color: #00ffcc;
+            color: #121212;
+            text-transform: uppercase;
+        }
+
+        tr:nth-child(even) {
+            background: rgba(0, 255, 204, 0.2);
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="leaderboard-container">
+        <h1>Select Game Mode</h1>
+        <div class="button-container">
+            <button id="single-btn">Single Player</button>
+            <button id="multi-btn">Multiplayer</button>
+        </div>
+        <p><strong>Game Mode:</strong> <span id="game-mode">Waiting...</span></p>
+    </div>
+
+    <div class="leaderboard-container">
+        <h2>Reaction Time</h2>
+        <p><strong>Player 1 Time:</strong> <span id="player1-time">0</span></p>
+        <p><strong>AI Time:</strong> <span id="ai-time">0 ms</span></p>
+    </div>
+
+    <div class="winner-container">
+        <h2>Winner:</h2>
+        <p><span id="winner"> Waiting for results...</span></p>
+    </div>
+
+    <h1>Reaction Timer Leaderboard</h1>
+    <div class="button-container">
+        <button onclick="getScoreBoard()">SINGLE MODE PLAYER</button>
+    </div>
+
+    <div class="leaderboard-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Reaction Time (ms)</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboard"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const socket = io();
+
+        // Request the leaderboard
+        function getScoreBoard() {
+            socket.emit("getScoreBoard");
+        }
+
+        // Handle the reception of score data and update the leaderboard
+        socket.on("ScoreData", (players) => {
+            const leaderboard = document.getElementById("leaderboard");
+            leaderboard.innerHTML = "";
+            players.forEach(player => {
+                const row = `<tr>
+                                <td>${player.name}</td>
+                                <td>${player.reaction_time}</td>
+                             </tr>`;
+                leaderboard.innerHTML += row;
+            });
+        });
+
+        // Listen for Scoreboard updates and refresh the data
+        socket.on("updatedScoreBoard", () => {
+            getScoreBoard();
+        });
+
+        // Display the received reaction time on the frontend
+        socket.on("reactions", (data) => {
+            document.getElementById("player1-time").innerText = `${data.player1} ms`;
+            document.getElementById("ai-time").innerText = `${data.ai} ms`;
+        });
+
+        // Handle Single Player mode selection
+        document.getElementById("single-btn").addEventListener("click", () => {
+            socket.emit("selectGameMode", "SINGLE");
+        });
+
+        // Handle Multiplayer mode selection
+        document.getElementById("multi-btn").addEventListener("click", () => {
+            socket.emit("selectGameMode", "MULTI");
+        });
+
+        // Listen for the game mode change and update the UI
+        socket.on("gameMode", (mode) => {
+            document.getElementById("game-mode").innerText = mode;  // Display the selected game mode
+        });
+
+        socket.on("winner", (data) => {
+        const winnerElement = document.getElementById("winner");
+        winnerElement.innerText = data.winner;
+        winnerElement.style.color = data.winner === "Player 1" ? "#00ff00" : "#ff0000"; // Green for Player 1, Red for AI
+        winnerElement.style.fontSize = "32px";
+        winnerElement.style.animation = "flash 1s infinite"; 
+    });
+
+    // Add CSS for winner animation
+    const style = document.createElement("style");
+    style.innerHTML = `
+        @keyframes flash {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+   
+    </script>
+</body>
+</html>
