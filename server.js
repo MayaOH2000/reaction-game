@@ -118,6 +118,7 @@ const parser = adruinoPort.pipe(new DelimiterParser({delimiter: "\n"}));
 // Variables to store reaction times
 let player1ReactionTime = null;
 let aiReactionTime = null;
+let player1Recorded = false;
 
 //Listen for Arduino data
 parser.on("data", (data) => {
@@ -133,20 +134,25 @@ parser.on("data", (data) => {
         // Update reaction times
         if (playerName === "Player 1") {
             player1ReactionTime = time;
-        } else if (playerName === "AI") {
-            aiReactionTime = time;
-        }
 
-        // Insert the data directly into the database
-        let sql = `INSERT INTO players (name, reaction_time) VALUES (?, ?)`;
-        db.query(sql, [playerName, time], (error) => {
-            if (error) {
-                console.error("Error Inserting Score: ", error);
-                return;
-            }
+            if(!player1Recorded){
+            // Insert the data directly into the database
+            let sql = `INSERT INTO players (name, reaction_time) VALUES (?, ?)`;
+            db.query(sql, [playerName, time], (error) => {
+                if (error) {
+                    console.error("Error Inserting Score: ", error);
+                    return;
+                }
             console.log("Score Added to Database!");
             io.emit("updatedScoreBoard"); // Emit updated scoreboard
         });
+         
+         player1Recorded = true;
+        }
+
+     } else if (playerName === "AI") {
+            aiReactionTime = time;
+        }
 
         // Determine winner after both times are received
         if (player1ReactionTime !== null && aiReactionTime !== null) {
@@ -161,6 +167,7 @@ parser.on("data", (data) => {
             // Reset reaction times for the next round
             player1ReactionTime = null;
             aiReactionTime = null;
+            player1Recorded = false;
         }
     }
 });
