@@ -98,7 +98,7 @@ io.on("connection", socket => {
 
     //Get score board data from lowest to highest result displays only top 10 results
     socket.on('getScoreBoard', () => {
-        db.query("SELECT * FROM players ORDER BY reaction_time asc limit 10", (error, results) => {
+        db.query("SELECT DISTINCT reaction_time, name FROM players ORDER BY reaction_time asc limit 10", (error, results) => {
             if (error){
                 console.error("Error Getting Scoreboard: ", error);
                 return;
@@ -129,6 +129,7 @@ parser.on("data", (data) => {
         console.log(`Parsed Player: ${playerName}, Time: ${time}`); // DEBUGGING
 
         // Insert the data directly into the database
+        
         let sql = `INSERT INTO players (name, reaction_time) VALUES (?, ?)`;
         db.query(sql, [playerName, time], (error) => {
             if (error) {
