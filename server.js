@@ -119,6 +119,7 @@ const parser = adruinoPort.pipe(new DelimiterParser({delimiter: "\n"}));
 let player1ReactionTime = null;
 let aiReactionTime = null;
 let player1Recorded = false;
+let player2Recorded = false;
 
 //Listen for Arduino data
 parser.on("data", (data) => {
@@ -126,49 +127,118 @@ parser.on("data", (data) => {
     console.log(`Arduino data: ${trimmedData}`);
 
     // Check in the Arduino port for messages starting with any of these
-    const parts = trimmedData.split(":");
-    if (parts.length === 2) {
-        const playerName = parts[0].trim();
-        const time = parseFloat(parts[1].trim(), 10);
-
-        // Update reaction times
-        if (playerName === "Player 1") {
-            player1ReactionTime = time;
-
-            if(!player1Recorded){
-            // Insert the data directly into the database
-            let sql = `INSERT INTO players (name, reaction_time) VALUES (?, ?)`;
-            db.query(sql, [playerName, time], (error) => {
-                if (error) {
-                    console.error("Error Inserting Score: ", error);
-                    return;
-                }
-            console.log("Score Added to Database!");
-            io.emit("updatedScoreBoard"); // Emit updated scoreboard
-        });
-         
-         player1Recorded = true;
+    if (gameMode === "SINGLE")
+    {
+        const parts = trimmedData.split(":");
+        if (parts.length === 2) {
+            const playerName = parts[0].trim();
+            const time = parseFloat(parts[1].trim(), 10);
+    
+            // Update reaction times
+            if (playerName === "Player 1") {
+                player1ReactionTime = time;
+    
+                if(!player1Recorded){
+                // Insert the data directly into the database
+                let sql = `INSERT INTO players (name, reaction_time) VALUES (?, ?)`;
+                db.query(sql, [playerName, time], (error) => {
+                    if (error) {
+                        console.error("Error Inserting Score: ", error);
+                        return;
+                    }
+                console.log("Score Added to Database!");
+                io.emit("updatedScoreBoard"); // Emit updated scoreboard
+            });
+             
+             player1Recorded = true;
+            }
+    
+         } else if (playerName === "AI") {
+                aiReactionTime = time;
+            }
+    
+            // Determine winner after both times are received
+            if (player1ReactionTime !== null && aiReactionTime !== null) {
+                // Emit the reaction time to the frontend
+                io.emit("reactions", { player1: player1ReactionTime, ai: aiReactionTime });
+    
+                //Determine Winner
+                const winner = player1ReactionTime < aiReactionTime ? "Player 1" : "AI";
+                console.log(`${winner} wins!`);
+                io.emit("winner", { winner });
+    
+                // Reset reaction times for the next round
+                player1ReactionTime = null;
+                aiReactionTime = null;
+                player1Recorded = false;
+            }
         }
 
-     } else if (playerName === "AI") {
-            aiReactionTime = time;
+    }
+    if (gameMode === "MULTI")
+    {
+        const parts = trimmedData.split(":");
+        if (parts.length === 2) {
+            const playerName = parts[0].trim();
+            const time = parseFloat(parts[1].trim(), 10);
+    
+            // Update reaction times
+            if (playerName === "Player 1") {
+                player1ReactionTime = time;
+    
+                if(!player1Recorded){
+                // Insert the data directly into the database
+                let sql = `INSERT INTO players (name, reaction_time) VALUES (?, ?)`;
+                db.query(sql, [playerName, time], (error) => {
+                    if (error) {
+                        console.error("Error Inserting Score: ", error);
+                        return;
+                    }
+                console.log("Score Added to Database!");
+                io.emit("updatedScoreBoard"); // Emit updated scoreboard
+            });
+                
+                player1Recorded = true;
+            }
+    
+            } 
+            if (playerName === "Player 2") {
+                aiReactionTime = time;
+    
+                if(!player2Recorded){
+                // Insert the data directly into the database
+                let sql = `INSERT INTO players (name, reaction_time) VALUES (?, ?)`;
+                db.query(sql, [playerName, time], (error) => {
+                    if (error) {
+                        console.error("Error Inserting Score: ", error);
+                        return;
+                    }
+                console.log("Score Added to Database!");
+                io.emit("updatedScoreBoard"); // Emit updated scoreboard
+            });
+                
+                player2Recorded = true;
+            }
+        }
+    
+            // Determine winner after both times are received
+            if (player1ReactionTime !== null && aiReactionTime !== null) {
+                // Emit the reaction time to the frontend
+                io.emit("reactions", { player1: player1ReactionTime, ai: aiReactionTime });
+    
+                //Determine Winner
+                const winner = player1ReactionTime < aiReactionTime ? "Player 1" : "Player 2";
+                console.log(`${winner} wins!`);
+                io.emit("winner", { winner });
+    
+                // Reset reaction times for the next round
+                player1ReactionTime = null;
+                aiReactionTime = null;
+                player1Recorded = false;
+                player2Recorded = false;
+            }
         }
 
-        // Determine winner after both times are received
-        if (player1ReactionTime !== null && aiReactionTime !== null) {
-            // Emit the reaction time to the frontend
-            io.emit("reactions", { player1: player1ReactionTime, ai: aiReactionTime });
-
-            //Determine Winner
-            const winner = player1ReactionTime < aiReactionTime ? "Player 1" : "AI";
-            console.log(`${winner} wins!`);
-            io.emit("winner", { winner });
-
-            // Reset reaction times for the next round
-            player1ReactionTime = null;
-            aiReactionTime = null;
-            player1Recorded = false;
-        }
     }
 });
 
