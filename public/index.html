@@ -84,6 +84,27 @@
     </style>
 </head>
 <body>
+    
+    <div class="leaderboard-container">
+        <h1>Select Game Mode</h1>
+        <div class="button-container">
+            <button id="single-btn">Single Player</button>
+            <button id="multi-btn">Multiplayer</button>
+        </div>
+        <p><strong>Game Mode:</strong> <span id="game-mode">Waiting...</span></p>
+    </div>
+
+    <div class="leaderboard-container">
+        <h2>Reaction Time</h2>
+        <p><strong>Player 1 Time:</strong> <span id="player1-time">0</span></p>
+        <p><strong>AI Time:</strong> <span id="ai-time">0 ms</span></p>
+    </div>
+
+    <div class="winner-container">
+        <h2>Winner:</h2>
+        <p><span id="winner"> Waiting for results...</span></p>
+    </div>
+
     <h1>Reaction Timer Leaderboard</h1>
     <div class="button-container">
         <button onclick="getScoreBoard()">SINGLE MODE PLAYER</button>
@@ -101,23 +122,8 @@
         </table>
     </div>
 
-    <div class="leaderboard-container">
-        <h2>Select Game Mode</h2>
-        <div class="button-container">
-            <button id="single-btn">Single Player</button>
-            <button id="multi-btn">Multiplayer</button>
-        </div>
-        <p><strong>Game Mode:</strong> <span id="game-mode">Waiting...</span></p>
-    </div>
-
-    <div class="leaderboard-container">
-        <h2>Reaction Time</h2>
-        <p><strong>Time:</strong> <span id="reaction">0</span></p>
-    </div>
-
     <script>
         const socket = io();
-        let playerName = "TestPlayer1";  // You can replace this with the player's actual name
 
         // Request the leaderboard
         function getScoreBoard() {
@@ -143,11 +149,9 @@
         });
 
         // Display the received reaction time on the frontend
-        socket.on("reaction", (data) => {
-            console.log(`Received reaction data from server: ${data.name}, Time: ${data.reaction}`);
-
-            document.getElementById("reaction").innerText = data.reaction + " ms";  // Display the reaction time in ms
-            socket.emit("score", { name: data.name, time: data.reaction });  // Insert the reaction time into the database
+        socket.on("reactions", (data) => {
+            document.getElementById("player1-time").innerText = `${data.player1} ms`;
+            document.getElementById("ai-time").innerText = `${data.ai} ms`;
         });
 
         // Handle Single Player mode selection
@@ -164,6 +168,26 @@
         socket.on("gameMode", (mode) => {
             document.getElementById("game-mode").innerText = mode;  // Display the selected game mode
         });
+
+        socket.on("winner", (data) => {
+        const winnerElement = document.getElementById("winner");
+        winnerElement.innerText = data.winner;
+        winnerElement.style.color = data.winner === "Player 1" ? "#00ff00" : "#ff0000"; // Green for Player 1, Red for AI
+        winnerElement.style.fontSize = "32px";
+        winnerElement.style.animation = "flash 1s infinite"; 
+    });
+
+    // Add CSS for winner animation
+    const style = document.createElement("style");
+    style.innerHTML = `
+        @keyframes flash {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+   
     </script>
 </body>
 </html>

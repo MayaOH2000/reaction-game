@@ -38,6 +38,10 @@ bool g_isPlayer2Done = false;
 
 bool g_AskGameMode = false;
 
+//AI Variables
+unsigned long g_aiRreactionTime = 500UL; // Initial AI ms
+const int g_aiIncrement = 50; // Amount to increase or decrease by
+
 void setup()
 {
   Serial.begin(9600);
@@ -190,14 +194,30 @@ void reaction(int iPlayer)
   if (g_GameMode == 1)
   {
     g_reactionPlayer1 = millis() - g_startTime;
+    g_isPlayer1Done = true;
+
+    //PLayer wins if faster then AI time
+    bool playerWon = g_reactionPlayer1 < g_aiRreactionTime;
+
+    //Adjust AI
+    if (playerWon) {
+      g_aiRreactionTime = max(100UL, g_aiRreactionTime - g_aiIncrement); // decrease time max to 100
+    } else {
+      delay(g_aiRreactionTime); // Simulate AI reaction
+      g_aiRreactionTime = min(2000UL, g_aiRreactionTime + g_aiIncrement); //increase reaction to not exceed 2 seconds
+    }
+
 
     setColourRgb(0, 0, 128);
 
     delay(2000);
 
-    Serial.print("Player 1: ");
-    Serial.print(g_reactionPlayer1);
-    Serial.println(" ms\n");
+    Serial.print("Player 1:");
+    Serial.println(g_reactionPlayer1);
+    // Serial.println(" ms\n");
+    Serial.print("AI:");
+    Serial.println(g_aiRreactionTime);
+    Serial.println(playerWon ? "Player wins!" : "AI wins!"); //if true use this value : if false use this value
 
     // Reset game
     digitalWrite(START, LOW);
@@ -230,12 +250,12 @@ void reaction(int iPlayer)
 
     delay(2000);
 
-    Serial.print("Player 1: ");
-    Serial.print(g_reactionPlayer1);
-    Serial.println(" ms");
-    Serial.print("Player 2: ");
-    Serial.print(g_reactionPlayer2);
-    Serial.println(" ms\n");
+    Serial.print("Player 1:");
+    Serial.println(g_reactionPlayer1);
+    // Serial.println(" ms");
+    Serial.print("Player 2:");
+    Serial.println(g_reactionPlayer2);
+    // Serial.println(" ms\n");
 
     // Reset game
     digitalWrite(START, LOW);
@@ -290,8 +310,19 @@ void loop()
   }
 
   if (g_GameMode == 1 && digitalRead(PLAYER_1) == LOW && g_isReady == true)
-  {
-      reaction(PLAYER_1);
+  {   
+      unsigned long currentTime = millis();
+      if (currentTime - g_startTime >= g_aiRreactionTime && !g_isPlayer1Done)
+      {
+        reaction(PLAYER_1);
+
+      } else if (digitalRead(PLAYER_1) == LOW && !g_isPlayer1Done)
+       { //Player pressed
+        reaction(PLAYER_1);
+      }
+
+      delay(100); //Debounce
+      
   }
 
   if (g_GameMode == 2)

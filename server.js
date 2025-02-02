@@ -115,6 +115,10 @@ io.on("connection", socket => {
 const adruinoPort = new SerialPort({path: 'COM6', baudRate: 9600});
 const parser = adruinoPort.pipe(new DelimiterParser({delimiter: "\n"}));
 
+// Variables to store reaction times
+let player1ReactionTime = null;
+let aiReactionTime = null;
+
 //Listen for Arduino data
 parser.on("data", (data) => {
     const trimmedData = data.toString().trim();
@@ -126,10 +130,14 @@ parser.on("data", (data) => {
         const playerName = parts[0].trim();
         const time = parseFloat(parts[1].trim(), 10);
 
-        console.log(`Parsed Player: ${playerName}, Time: ${time}`); // DEBUGGING
+        // Update reaction times
+        if (playerName === "Player 1") {
+            player1ReactionTime = time;
+        } else if (playerName === "AI") {
+            aiReactionTime = time;
+        }
 
         // Insert the data directly into the database
-        
         let sql = `INSERT INTO players (name, reaction_time) VALUES (?, ?)`;
         db.query(sql, [playerName, time], (error) => {
             if (error) {
@@ -138,12 +146,22 @@ parser.on("data", (data) => {
             }
             console.log("Score Added to Database!");
             io.emit("updatedScoreBoard"); // Emit updated scoreboard
-
-            // Emit the reaction time to the frontend
-            io.emit("reaction", { name: playerName, reaction: time });
         });
-    } else {
-        console.log("Invalid Data Format:", trimmedData);
+
+        // Determine winner after both times are received
+        if (player1ReactionTime !== null && aiReactionTime !== null) {
+            // Emit the reaction time to the frontend
+            io.emit("reactions", { player1: player1ReactionTime, ai: aiReactionTime });
+
+            //Determine Winner
+            const winner = player1ReactionTime < aiReactionTime ? "Player 1" : "AI";
+            console.log(`${winner} wins!`);
+            io.emit("winner", { winner });
+
+            // Reset reaction times for the next round
+            player1ReactionTime = null;
+            aiReactionTime = null;
+        }
     }
 });
 
