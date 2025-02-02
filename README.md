@@ -40,6 +40,7 @@ Install dependencies by typing npm install dependency name or npm install expres
 - serialport 
 - mysql2
 - cors
+- dotenv
 
 3. Set up your environment variables in a `.env` file:
 DB_HOST=your_host
@@ -61,7 +62,7 @@ Here is a list of the events on the hardware:
 - Game mode selected: RGB lights up magenta
 - Game counts down: Red, yellow and green LED light up one by one
 - Game is ready: White LED lights up, a sound cue will indicate the start of the game
-- Game ends: RGB lights up blue- dotenv
+- Game ends: RGB lights up blue
 
 ## Leaderboard
 
