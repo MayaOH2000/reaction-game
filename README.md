@@ -3,7 +3,7 @@
 A real-time reaction game with Arduino integration, featuring single-player and multiplayer modes.
 
 ## Project Goal
-Demonstrates real-time hardware-software integration, multiplayer networking, and adaptive AI in a reaction game.
+Completed as a hackathon project ([ReactCore on Devpost](https://devpost.com/software/reactcore)), demonstrating real-time hardware-software integration, multiplayer networking, and adaptive AI.
 
 ## 🚀 Features
 - Real-time gameplay using Socket.IO
@@ -56,13 +56,13 @@ Set up your MySQL database using `database_schema.sql`.
    ```bash
    node server.js
    ```
-3. Open `http://localhost:8000` in your web browser.
+2. Open `http://localhost:8000` in your web browser.
 
 ## 🔌 Arduino Code / Setup
 Run this code on an Arduino Mega 2560 board in the Arduino IDE
 
 Here is a list of the events on the hardware:
-- Waiting for game mode selection: RGB lights up cyan, while red, yellow and green LEDs light up
+- Waiting for game mode selection: RGB lights up cyan, and red, yellow and green LEDs light up
 - Game mode selected: RGB lights up magenta
 - Game counts down: Red, yellow and green LED lights up one by one
 - Game is ready: White LED lights up, a sound cue will indicate the start of the game
